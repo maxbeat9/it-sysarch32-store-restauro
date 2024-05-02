@@ -85,12 +85,12 @@ function Home() {
       )}
 
       <div className="cart">
-        <h2>Cart Items</h2>
+        <h2>Cart</h2>
         <ul>
           {cartItems.map((item, index) => (
             <li key={index}>
-              <img src={item} alt="Cart Item" />
-              <button className="delete-button" onClick={() => handleRemoveFromCart(index)}>Remove from cart</button>
+              <img src={item} alt="Cart Item" style={{ width: '300px' }} />
+              <button className="button" onClick={() => handleRemoveFromCart(index)}>Delete</button>
             </li>
           ))}
         </ul>
