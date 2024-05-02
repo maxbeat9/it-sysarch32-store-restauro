@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 
 function Home() {
   const [expandedImage, setExpandedImage] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
+
   const expandedImageRef = useRef(null);
 
   const handleExpandClick = (imageUrl) => {
@@ -14,12 +16,43 @@ function Home() {
     }
   };
 
+  const handleAddToCart = (imageUrl) => {
+    setCartItems((prevCartItems) => [...prevCartItems, imageUrl]);
+  };
+
+  const handleRemoveFromCart = (index) => {
+    setCartItems((prevCartItems) => prevCartItems.filter((_, i) => i !== index));
+  };
+
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const products = [
+    {
+      imageUrl: "https://moto.yugatech.com/wp-content/uploads/2023/05/yamaha-r15-v4-and-r15s-2023-launched-what-you-need-to-know.jpeg",
+      name: "Yamaha r15 white"
+    },
+    {
+      imageUrl: "https://assets.otocapital.in/prod/racing-blue-yamaha-r15-v3-image.jpeg",
+      name: "Yamaha r15 blue"
+    },
+    {
+      imageUrl: "https://imgd.aeplcdn.com/370x208/n/cw/ec/108277/yamaha-yzf-r15-right-side-view1.jpeg?isig=0&q=80",
+      name: "Yamaha r15 blue"
+    },
+    {
+      imageUrl: "https://cdn.motor1.com/images/mgl/W8GoQN/s3/yamaha-refreshes-yzf-r125-and-yzf-r15-sportbikes-in-japan.jpg",
+      name: "Yamaha r15 blue"
+    },
+    {
+      imageUrl: "https://www.perfectriders.in/wp-content/uploads/2024/01/magenta.webp",
+      name: "Yamaha r15 blue"
+    }
+  ];
 
   return (
     <div>
@@ -32,57 +65,36 @@ function Home() {
       </div>
       
       <div className="product-holder">
-        <div className="product-item">
-          <img src="https://moto.yugatech.com/wp-content/uploads/2023/05/yamaha-r15-v4-and-r15s-2023-launched-what-you-need-to-know.jpeg" alt="Yamaha r15 white" />
-          <div className="button-container">
-            <button className="button" onClick={() => handleExpandClick("https://moto.yugatech.com/wp-content/uploads/2023/05/yamaha-r15-v4-and-r15s-2023-launched-what-you-need-to-know.jpeg")}>
-              Expand
-            </button>
+        {products.map((product, index) => (
+          <div className="product-item" key={index}>
+            <img src={product.imageUrl} alt={product.name} />
+            <div className="button-container">
+              <button className="button" onClick={() => handleExpandClick(product.imageUrl)}>
+                Expand
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div className="product-item">
-          <img src="https://assets.otocapital.in/prod/racing-blue-yamaha-r15-v3-image.jpeg" alt="Yamaha r15 blue" />
-          <div className="button-container">
-            <button className="button" onClick={() => handleExpandClick("https://assets.otocapital.in/prod/racing-blue-yamaha-r15-v3-image.jpeg")}>
-              Expand
-            </button>
-          </div>
-        </div>
-
-        <div className="product-item">
-          <img src="https://imgd.aeplcdn.com/370x208/n/cw/ec/108277/yamaha-yzf-r15-right-side-view1.jpeg?isig=0&q=80" alt="Yamaha r15 blue" />
-          <div className="button-container">
-            <button className="button" onClick={() => handleExpandClick("https://imgd.aeplcdn.com/370x208/n/cw/ec/108277/yamaha-yzf-r15-right-side-view1.jpeg?isig=0&q=80")}>
-              Expand
-            </button>
-          </div>
-        </div>
-
-        <div className="product-item">
-          <img src="https://cdn.motor1.com/images/mgl/W8GoQN/s3/yamaha-refreshes-yzf-r125-and-yzf-r15-sportbikes-in-japan.jpg" alt="Yamaha r15 blue" />
-          <div className="button-container">
-            <button className="button" onClick={() => handleExpandClick("https://cdn.motor1.com/images/mgl/W8GoQN/s3/yamaha-refreshes-yzf-r125-and-yzf-r15-sportbikes-in-japan.jpg")}>
-              Expand
-            </button>
-          </div>
-        </div>
-
-        <div className="product-item">
-          <img src="https://www.perfectriders.in/wp-content/uploads/2024/01/magenta.webp" alt="Yamaha r15 blue" />
-          <div className="button-container">
-            <button className="button" onClick={() => handleExpandClick("https://www.perfectriders.in/wp-content/uploads/2024/01/magenta.webp")}>
-              Expand
-            </button>
-          </div>
-        </div>
+        ))}
       </div>
 
       {expandedImage && (
         <div className="expanded-image" ref={expandedImageRef}>
           <img src={expandedImage} alt="Expanded" />
+          <button className="add-to-cart-button" onClick={() => handleAddToCart(expandedImage)}>Add to Cart</button>
         </div>
       )}
+
+      <div className="cart">
+        <h2>Cart Items</h2>
+        <ul>
+          {cartItems.map((item, index) => (
+            <li key={index}>
+              <img src={item} alt="Cart Item" />
+              <button className="delete-button" onClick={() => handleRemoveFromCart(index)}>Remove from cart</button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

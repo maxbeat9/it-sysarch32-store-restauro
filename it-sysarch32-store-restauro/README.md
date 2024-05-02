@@ -3,7 +3,7 @@ Plugins
 
 - npm install -g firebase-tools
 - firebase login
-
+- npm install react-router-dom
 //incase if firebase login does not work, delete firebase.ps1 and use the following command
     - npm cache clean --force
     - rerun firebase login
