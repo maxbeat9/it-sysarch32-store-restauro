@@ -1,10 +1,51 @@
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import React, { useState, useRef, useEffect } from 'react';
+
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBSKXnYXb3Xlwvxs8ygDSxhN8a0XigP19I",
+  authDomain: "it-sysarch32-store-restauro.firebaseapp.com",
+  projectId: "it-sysarch32-store-restauro",
+  storageBucket: "it-sysarch32-store-restauro.appspot.com",
+  messagingSenderId: "552128528292",
+  appId: "1:552128528292:web:ca0e820070bbb3930f8b31",
+  measurementId: "G-DQ0S5S2WDK"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 function Home() {
   const [expandedImage, setExpandedImage] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const expandedImageRef = useRef(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const db = getFirestore();
+        const productsCollection = collection(db, 'products');
+        const productsSnapshot = await getDocs(productsCollection);
+        const productsData = productsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          imageUrl: doc.data().imageUrl,
+          description: doc.data().Description,
+          price: doc.data().Price
+        }));
+        console.log("Fetched products:", productsData);
+        setProducts(productsData);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleExpandClick = (imageUrl) => {
     setExpandedImage((prevExpandedImage) => (prevExpandedImage === imageUrl ? null : imageUrl));
@@ -31,29 +72,6 @@ function Home() {
     };
   }, []);
 
-  const products = [
-    {
-      imageUrl: "https://moto.yugatech.com/wp-content/uploads/2023/05/yamaha-r15-v4-and-r15s-2023-launched-what-you-need-to-know.jpeg",
-      name: "Yamaha r15 white"
-    },
-    {
-      imageUrl: "https://assets.otocapital.in/prod/racing-blue-yamaha-r15-v3-image.jpeg",
-      name: "Yamaha r15 blue"
-    },
-    {
-      imageUrl: "https://imgd.aeplcdn.com/370x208/n/cw/ec/108277/yamaha-yzf-r15-right-side-view1.jpeg?isig=0&q=80",
-      name: "Yamaha r15 blue"
-    },
-    {
-      imageUrl: "https://cdn.motor1.com/images/mgl/W8GoQN/s3/yamaha-refreshes-yzf-r125-and-yzf-r15-sportbikes-in-japan.jpg",
-      name: "Yamaha r15 blue"
-    },
-    {
-      imageUrl: "https://www.perfectriders.in/wp-content/uploads/2024/01/magenta.webp",
-      name: "Yamaha r15 blue"
-    }
-  ];
-
   return (
     <div>
       <div className="featureTitle">
@@ -66,8 +84,8 @@ function Home() {
       
       <div className="product-holder">
         {products.map((product, index) => (
-          <div className="product-item" key={index}>
-            <img src={product.imageUrl} alt={product.name} />
+          <div className="product-item" key={product.id}>
+            <img src={product.imageUrl} alt={product.description} />
             <div className="button-container">
               <button className="button" onClick={() => handleExpandClick(product.imageUrl)}>
                 Expand
