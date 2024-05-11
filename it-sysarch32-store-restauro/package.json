@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^2.7.1",
+    "axios": "^1.6.8",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
     "firebase": "^9.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -24,5 +28,10 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "vite": "^5.2.0"
-  }
+  },
+  "description": "Plugins",
+  "main": "vite.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

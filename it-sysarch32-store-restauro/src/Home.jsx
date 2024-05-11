@@ -1,9 +1,9 @@
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import React, { useState, useRef, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { loadStripe } from '@stripe/stripe-js';
+import axios from 'axios';
 
-// Your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBSKXnYXb3Xlwvxs8ygDSxhN8a0XigP19I",
   authDomain: "it-sysarch32-store-restauro.firebaseapp.com",
@@ -14,14 +14,15 @@ const firebaseConfig = {
   measurementId: "G-DQ0S5S2WDK"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+initializeApp(firebaseConfig);
+
+const stripePromise = loadStripe('pk_test_51PF3CWH1wSRd6BtMBugxL1VdnrP3FEvUpo86oqN0XVvoF73lvCQMpFaMqTe1TekjjaS9G1cx6MhBqT1Na7i8DBUs00ALPrQ5I3');
 
 function Home() {
-  const [expandedImage, setExpandedImage] = useState(null);
+  const [expandedProduct, setExpandedProduct] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   const expandedImageRef = useRef(null);
 
@@ -47,22 +48,26 @@ function Home() {
     fetchProducts();
   }, []);
 
-  const handleExpandClick = (imageUrl) => {
-    setExpandedImage((prevExpandedImage) => (prevExpandedImage === imageUrl ? null : imageUrl));
+  const handleExpandClick = (product) => {
+    setExpandedProduct((prevExpandedProduct) => (prevExpandedProduct === product ? null : product));
   };
 
   const handleClickOutside = (event) => {
     if (expandedImageRef.current && !expandedImageRef.current.contains(event.target)) {
-      setExpandedImage(null);
+      setExpandedProduct(null);
     }
   };
 
-  const handleAddToCart = (imageUrl) => {
-    setCartItems((prevCartItems) => [...prevCartItems, imageUrl]);
+  const handleAddToCart = (product) => {
+    setCartItems((prevCartItems) => [...prevCartItems, product]);
   };
 
   const handleRemoveFromCart = (index) => {
-    setCartItems((prevCartItems) => prevCartItems.filter((_, i) => i !== index));
+    setCartItems((prevCartItems) => {
+      const newCartItems = [...prevCartItems];
+      newCartItems.splice(index, 1);
+      return newCartItems;
+    });
   };
 
   useEffect(() => {
@@ -71,6 +76,63 @@ function Home() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    console.log("Cart items changed:", cartItems);
+    const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    setTotalPrice(totalPrice);
+  }, [cartItems]);
+  
+  // const handleCheckout = async () => {
+  //   const stripe = await stripePromise;
+
+  //   try {
+  //     const response = await axios.post('http://localhost:4000/create-checkout-session', {
+  //       cartItems,
+  //       totalPrice: totalPrice.toString() // Convert totalPrice to a string
+  //     });
+
+  //     const session = await response.data;
+  //     const result = await stripe.redirectToCheckout({
+  //       sessionId: session.id,
+  //     });
+
+  //     if (result.error) {
+  //       console.error(result.error.message);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating checkout session:', error);
+  //   }
+  // };
+
+  const handleCheckout = async () => {
+    const stripe = await stripePromise;
+    
+    try {
+      // Calculate total price dynamically
+      const totalPrice = cartItems.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
+    
+      const response = await axios.post('http://localhost:4000/create-checkout-session', {
+        cartItems,
+        totalPrice: totalPrice.toString() // Convert totalPrice to a string
+      });
+    
+      const session = await response.data;
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      });
+    
+      if (result.error) {
+        console.error(result.error.message);
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+    }
+  };
+  
+  
+  
+  
 
   return (
     <div>
@@ -87,7 +149,7 @@ function Home() {
           <div className="product-item" key={product.id}>
             <img src={product.imageUrl} alt={product.description} />
             <div className="button-container">
-              <button className="button" onClick={() => handleExpandClick(product.imageUrl)}>
+              <button className="button" onClick={() => handleExpandClick(product)}>
                 Expand
               </button>
             </div>
@@ -95,10 +157,14 @@ function Home() {
         ))}
       </div>
 
-      {expandedImage && (
+      {expandedProduct && (
         <div className="expanded-image" ref={expandedImageRef}>
-          <img src={expandedImage} alt="Expanded" />
-          <button className="add-to-cart-button" onClick={() => handleAddToCart(expandedImage)}>Add to Cart</button>
+          <img src={expandedProduct.imageUrl} alt="Expanded" />
+          <div>
+            {expandedProduct.description && <p className="expandedtext">{expandedProduct.description}</p>}
+            {expandedProduct.price && <p className="expandedtext">Price: {expandedProduct.price}</p>}
+          </div>
+          <button className="add-to-cart-button" onClick={() => handleAddToCart({ ...expandedProduct, quantity: 1 })}>Add to Cart</button>
         </div>
       )}
 
@@ -107,11 +173,15 @@ function Home() {
         <ul>
           {cartItems.map((item, index) => (
             <li key={index}>
-              <img src={item} alt="Cart Item" style={{ width: '300px' }} />
+              <img src={item.imageUrl} alt="Cart Item" style={{ width: '300px' }} />
+              <p className="white-text">{item.description}</p>
+              <p className="white-text">Price: {item.price * item.quantity}</p>
               <button className="button" onClick={() => handleRemoveFromCart(index)}>Delete</button>
             </li>
           ))}
         </ul>
+        <p className="white-text">Total Price: {totalPrice}</p>
+        <button className="checkout-button" onClick={handleCheckout}>Checkout</button>
       </div>
     </div>
   );
